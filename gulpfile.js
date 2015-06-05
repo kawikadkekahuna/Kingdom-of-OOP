@@ -28,32 +28,31 @@ gulp.task('lint', function () {
     .pipe(plugins.jshint.reporter('jshint-stylish'));
 });
 
-gulp.task('istanbul', function (cb) {
-  gulp.src(paths.dist)
-    .pipe(plugins.istanbul()) // Covering files
-    //.pipe(plugins.istanbul.hookRequire()) // Force `require` to return covered files
-    .on('finish', function () {
-      gulp.src(paths.tests)
-        .pipe(plugins.plumber(plumberConf))
-        .pipe(plugins.mocha())
-        .pipe(plugins.istanbul.writeReports()) // Creating the reports after tests runned
-        .on('finish', function() {
-          process.chdir(__dirname);
-          cb();
-        });
-    });
+gulp.task('mocha', function () {
+  return gulp.src(paths.tests)
+    .pipe(plugins.plumber(plumberConf))
+    .pipe(plugins.mocha({
+      'bail' : true
+    }));
 });
 
 gulp.task('watch', ['test'], function () {
   gulp.watch(paths.watch, ['test']);
 });
 
-gulp.task('test', ['build', 'lint', 'istanbul']);
+gulp.task('test', ['build', 'lint', 'mocha']);
 
 gulp.task('default', ['watch']);
 
 gulp.task('run', function () {
-  require('./example/index');
+  return gulp.src(['./example/**'])
+    .pipe(plugins.sourcemaps.init())
+    .pipe(plugins.babel())
+    .pipe(plugins.sourcemaps.write('.'))
+    .pipe(gulp.dest(paths.bin))
+    .on('finish', function(){
+      require('./bin/index');
+    });
 });
 
 gulp.task('build', function () {
